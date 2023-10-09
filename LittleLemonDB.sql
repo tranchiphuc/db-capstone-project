@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS `LittleLemonDB`.`Customers` (
   `CustomerID` INT NOT NULL,
   `Name` VARCHAR(45) NULL,
   `Contact` VARCHAR(45) NULL,
+  `Email` VARCHAR(45) NULL,
   PRIMARY KEY (`CustomerID`))
 ENGINE = InnoDB;
 
@@ -32,8 +33,7 @@ CREATE TABLE IF NOT EXISTS `LittleLemonDB`.`Bookings` (
   `BookingID` INT NOT NULL AUTO_INCREMENT,
   `CustomerID` INT NOT NULL,
   `TableNo` INT NULL,
-  `BookingDate` DATE NULL,
-  `BookingSlot` TIME NULL,
+  `Date` DATE NULL,
   PRIMARY KEY (`BookingID`),
   INDEX `fk_customer_id_idx` (`CustomerID` ASC) VISIBLE,
   CONSTRAINT `fk_customer_id`
@@ -48,11 +48,12 @@ ENGINE = InnoDB;
 -- Table `LittleLemonDB`.`MenuItems`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `LittleLemonDB`.`MenuItems` (
-  `ItemID` INT NOT NULL AUTO_INCREMENT,
-  `Name` VARCHAR(45) NULL,
-  `Type` VARCHAR(45) NULL,
-  `Price` INT NULL,
-  PRIMARY KEY (`ItemID`))
+  `MenuItemsID` INT NOT NULL,
+  `Course` VARCHAR(45) NULL,
+  `Starter` VARCHAR(45) NULL,
+  `Dessert` VARCHAR(45) NULL,
+  `Drink` VARCHAR(45) NULL,
+  PRIMARY KEY (`MenuItemsID`))
 ENGINE = InnoDB;
 
 
@@ -61,12 +62,14 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `LittleLemonDB`.`Menus` (
   `MenuID` INT NOT NULL AUTO_INCREMENT,
-  `ItemID` INT NOT NULL,
-  `Cuisine` VARCHAR(45) NOT NULL,
-  PRIMARY KEY (`MenuID`, `ItemID`),
-  CONSTRAINT `fk_item_id`
-    FOREIGN KEY (`MenuID`)
-    REFERENCES `LittleLemonDB`.`MenuItems` (`ItemID`)
+  `MenuItemsID` INT NOT NULL,
+  `MenuName` VARCHAR(45) NULL,
+  `Cuisine` VARCHAR(45) NULL,
+  PRIMARY KEY (`MenuID`),
+  INDEX `fk_menuitems_id_idx` (`MenuItemsID` ASC) VISIBLE,
+  CONSTRAINT `fk_menuitems_id`
+    FOREIGN KEY (`MenuItemsID`)
+    REFERENCES `LittleLemonDB`.`MenuItems` (`MenuItemsID`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
@@ -79,7 +82,7 @@ CREATE TABLE IF NOT EXISTS `LittleLemonDB`.`Orders` (
   `OrderID` INT NOT NULL AUTO_INCREMENT,
   `MenuID` INT NULL,
   `BookingID` INT NULL,
-  `BillAmount` INT NULL,
+  `TotalCost` DECIMAL(10,2) NULL,
   `Quantity` INT NULL,
   PRIMARY KEY (`OrderID`),
   INDEX `fk_booking_id_idx` (`BookingID` ASC) VISIBLE,
@@ -102,9 +105,9 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `LittleLemonDB`.`Staff` (
   `StaffID` INT NOT NULL AUTO_INCREMENT,
-  `Name` VARCHAR(45) NOT NULL,
+  `Name` VARCHAR(45) NULL,
   `Role` VARCHAR(45) NOT NULL,
-  `AnnualSalary` INT NULL,
+  `AnnualSalary` DECIMAL NULL,
   PRIMARY KEY (`StaffID`))
 ENGINE = InnoDB;
 
@@ -124,6 +127,21 @@ CREATE TABLE IF NOT EXISTS `LittleLemonDB`.`OrderDeliveryStatus` (
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
+USE `LittleLemonDB` ;
+
+-- -----------------------------------------------------
+-- Placeholder table for view `LittleLemonDB`.`OrdersView`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `LittleLemonDB`.`OrdersView` (`OrderID` INT, `Quantity` INT, `TotalCost` INT);
+
+-- -----------------------------------------------------
+-- View `LittleLemonDB`.`OrdersView`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `LittleLemonDB`.`OrdersView`;
+USE `LittleLemonDB`;
+CREATE  OR REPLACE VIEW `OrdersView` AS
+SELECT OrderID, Quantity, TotalCost 
+FROM Orders;
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
