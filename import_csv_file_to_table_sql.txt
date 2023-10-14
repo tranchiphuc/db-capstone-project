@@ -1,0 +1,79 @@
+
+
+
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/customers.csv'
+INTO TABLE littlelemondb.customers
+FIELDS TERMINATED BY ',' ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS
+
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/staffs.csv'
+INTO TABLE littlelemondb.staffs
+FIELDS TERMINATED BY ',' ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/menuitems.csv'
+INTO TABLE littlelemondb.menuitems
+FIELDS TERMINATED BY ',' ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/menus.csv'
+INTO TABLE littlelemondb.menus
+FIELDS TERMINATED BY ',' ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/bookings.csv'
+INTO TABLE littlelemondb.bookings
+FIELDS TERMINATED BY ',' ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/orders.csv'
+INTO TABLE littlelemondb.orders
+FIELDS TERMINATED BY ',' ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+SELECT 
+    CONCAT(contactLastName, " ", contactFirstName) AS Name
+FROM
+    classicmodels.customers
+INTO OUTFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/customers.csv' 
+FIELDS ENCLOSED BY '"' 
+TERMINATED BY ';' 
+ESCAPED BY '"' 
+LINES TERMINATED BY '\r\n';
+
+
+
+USE `littlelemondb`;
+DROP procedure IF EXISTS `AddValidBooking`;
+
+DELIMITER $$
+USE `littlelemondb`$$
+CREATE PROCEDURE `AddValidBooking` (IN p_in_date DATE, IN p_in_table_no INT)
+BEGIN 
+    DECLARE status VARCHAR(45);
+	DECLARE EXIT HANDLER FOR sqlexception, sqlwarning
+    BEGIN
+		ROLLBACK;
+    END;
+    
+    START TRANSACTION;
+    IF EXISTS (SELECT * FROM bookings WHERE Date=p_in_date AND TableNo=p_in_table_no) THEN
+		SET status = CONCAT("Table ", p_in_table_no, " is already booked. Booking is cancelled.");
+	ELSE
+    	SELECT @BookingID = MAX(BookingID) + 1, @CustomerID = @BookingID % 100 FROM orders;
+        INSERT INTO bookings(BookingID, CustomerID, TableNo, Date) 
+        VALUES (BookingID, CustomerID, p_in_table_no, p_in_date);
+		SET status = CONCAT("Table ", p_in_table_no, " is booked successfully");
+    END IF;
+    SELECT status as "Booking Status";
+END;$$
+
+DELIMITER ;
+
+
