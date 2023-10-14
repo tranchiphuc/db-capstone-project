@@ -1,3 +1,59 @@
+CREATE VIEW `ordersview` 
+AS select `orders`.`OrderID` AS `OrderID`,`orders`.`Quantity` AS `Quantity`,`orders`.`TotalCost` AS `TotalCost` from `orders`;
+
+
+
+
+USE `littlelemondb`;
+DROP procedure IF EXISTS `GetMaxQuantity`;
+
+DELIMITER $$
+USE `littlelemondb`$$
+CREATE PROCEDURE `GetMaxQuantity` ()
+BEGIN
+	SELECT MAX(Quantity) AS "Max Quantity in Orders"
+    FROM orders;
+END$$
+DELIMITER ;
+
+
+PREPARE GetOrderDetail FROM
+	'SELECT OrderID AS "Order ID", Quantity, TotalCost AS "Order Cost" FROM ordersview WHERE OrderID = ?';
+	
+SET @id = 1;
+EXECUTE GetOrderDetail USING @id;
+
+
+
+USE `littlelemondb`;
+DROP procedure IF EXISTS `CancelOrder`;
+
+DELIMITER $$
+USE `littlelemondb`$$
+CREATE PROCEDURE `CancelOrder` (IN p_order_id INT)
+BEGIN
+    DECLARE status VARCHAR(255);
+	DECLARE EXIT HANDLER FOR sqlexception, sqlwarning
+    BEGIN
+		ROLLBACK;
+    END;
+	
+    START TRANSACTION;
+    IF EXISTS (SELECT OrderID FROM orders WHERE OrderID = p_order_id) THEN
+		DELETE FROM orders WHERE OrderID = p_order_id;
+		SET status = CONCAT("Order ", p_order_id, " is cancel");
+        SELECT status AS "Confirmation";
+	ELSE
+		SET status = CONCAT("Order ", p_order_id, " does not exist");
+        SELECT status AS "Information";
+	END IF;
+END$$
+DELIMITER ;
+
+
+
+
+
 DELIMITER //
 CREATE DEFINER=`phuctc`@`%` PROCEDURE `CheckBooking`(IN p_in_date VARCHAR(45), IN p_in_table_no INT)
 BEGIN

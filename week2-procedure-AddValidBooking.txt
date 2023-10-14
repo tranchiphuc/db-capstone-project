@@ -1,0 +1,21 @@
+DELIMITER $$
+CREATE PROCEDURE `AddValidBooking`(IN p_in_date DATE, IN p_in_table_no INT)
+BEGIN 
+    DECLARE status VARCHAR(45);
+	DECLARE EXIT HANDLER FOR sqlexception, sqlwarning
+    BEGIN
+		ROLLBACK;
+    END;
+    
+    START TRANSACTION;
+    IF EXISTS (SELECT  FROM bookings WHERE Date=p_in_date AND TableNo=p_in_table_no) THEN
+		SET status = CONCAT(Table , p_in_table_no,  is already booked. Booking is cancelled.);
+	ELSE
+    	SELECT @BookingID = MAX(BookingID) + 1, @CustomerID = @BookingID % 100 FROM bookings;
+        INSERT INTO bookings(BookingID, CustomerID, TableNo, Date) 
+        VALUES (@BookingID, @CustomerID, p_in_table_no, p_in_date);
+		SET status = CONCAT(Table , p_in_table_no,  is booked successfully);
+    END IF;
+    SELECT status as Booking Status;
+END$$
+DELIMITER ;
